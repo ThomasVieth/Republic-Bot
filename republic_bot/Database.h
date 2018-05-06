@@ -13,14 +13,18 @@ class Database
 {
 	private:
 		sqlite3 * db_;
+		sqlite3_stmt *stmt;
 		char * errorMessage_;
-		std::string constructionOfTables_ = "CREATE TABLE IF NOT EXISTS Users (" \
-											 "DISCRIMINATOR	INT		NOT NULL," \
+		std::string constructionOfTables_ = "CREATE TABLE Users (" \
 											 "NAME			TEXT	NOT NULL," \
+											 "DISCRIMINATOR	INT		NOT NULL," \
 											 "BALANCE		INT," \
-											 "PRIMARY KEY (DISCRIMINATOR, NAME)" \
+											 "PRIMARY KEY (NAME, DISCRIMINATOR)" \
 											 ");";
-		std::string existsStatement_ = "SELECT * FROM Users WHERE DISCRIMINATOR = %s AND NAME = %s";
+		std::string insertStatement_ = "INSERT INTO Users VALUES ('%s', %s, 0)";
+		std::string existsStatement_ = "SELECT * FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
+		std::string getFromStatement_ = "SELECT %s FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
+		std::string setFromStatement_ = "UPDATE Users SET %s=%s WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
 
 	public:
 		/*
@@ -56,6 +60,14 @@ class Database
 		void constructTables(void);
 
 		/*
+		Function:		Database::insertUser
+		Parameters:		string <a username>, string <a discriminator>
+		Return Value:	bool <was statement successful?>
+		Description:	Adds a new user to the database.
+		*/
+		void insertUser(std::string username, std::string discriminator);
+
+		/*
 		Function:		Database::exists
 		Parameters:		string <a username>, string <a discriminator>
 		Return Value:	bool <was the user existent>
@@ -64,11 +76,19 @@ class Database
 		bool exists(std::string username, std::string discriminator);
 
 		/*
-		Function:		Database::existsCallback
-		Parameters:		...
+		Function:		Database::getIntFromUser
+		Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>
 		Return Value:	int
-		Description:	Handles the sqlite exec and modifies vExists accordingly.
+		Description:	Retrieves a integer column value from the database relative to a user.
 		*/
-		static int existsCallback(void *notUsed, int argc, char ** argv, char ** azColName);
+		int getIntFromUser(std::string username, std::string discriminator, std::string column);
+
+		/*
+		Function:		Database::setIntFromUser
+		Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>, int <value to set>
+		Return Value:	None
+		Description:	Sets a integer column value to the database relative to a user.
+		*/
+		void setIntForUser(std::string username, std::string discriminator, std::string column, int value);
 };
 

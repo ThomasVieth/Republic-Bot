@@ -38,7 +38,21 @@ Return Value:	None
 Description:	Constructs all Tables needed for the database.
 */
 void Database::constructTables(void) {
-	sqlite3_exec(db_, constructionOfTables_.c_str(), 0, 0, &errorMessage_);
+	sqlite3_exec(db_, constructionOfTables_.c_str(), NULL, NULL, NULL);
+}
+
+/*
+Function:		Database::insertUser
+Parameters:		None
+Return Value:	None
+Description:	Adds a new user to the database.
+*/
+void Database::insertUser(std::string username, std::string discriminator) {
+	// Generate our sql query using the username and discriminator of the user.
+	char * buffer = new char[insertStatement_.length() + username.length() + discriminator.length()];
+	sprintf(buffer, insertStatement_.c_str(), username.c_str(), discriminator.c_str());
+	// Execute the statement without result handling.
+	sqlite3_exec(db_, buffer, NULL, NULL, NULL);
 }
 
 /*
@@ -48,25 +62,50 @@ Return Value:	bool <was the user existent>
 Description:	Returns true or false if the user is existent.
 */
 bool Database::exists(std::string username, std::string discriminator) {
-	bool * exists = new bool(false);
-	char * buffer = new char[59 + username.length() + discriminator.length()];
+	// Generate our sql query using the username and discriminator of the user.
+	char * buffer = new char[existsStatement_.length() + username.length() + discriminator.length()];
 	sprintf(buffer, existsStatement_.c_str(), username.c_str(), discriminator.c_str());
-	sqlite3_exec(db_, buffer, existsCallback, (void *)exists, &errorMessage_);
-	return *exists;
+	// Are there any rows returned? If so the user was existent.
+	if (sqlite3_prepare_v2(db_, buffer, -1, &stmt, NULL) == SQLITE_OK) {
+		if (int res = sqlite3_step(stmt) == SQLITE_ROW)
+			return true;
+	}
+	return false;
 }
 
 /*
-Function:		Database::existsCallback
-Parameters:		...
+Function:		Database::getIntFromUser
+Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>
 Return Value:	int
-Description:	Handles the sqlite exec and modifies vExists accordingly.
+Description:	Retrieves a column value from the database relative to a user.
 */
-int Database::existsCallback(void * vExists, int argc, char ** argv, char ** azColName) {
-	bool * exists = (bool *)vExists;
-	if (argc) {
-		*exists = true;
+int Database::getIntFromUser(std::string username, std::string discriminator, std::string column)
+{
+	char * buffer = new char[getFromStatement_.length() + username.length() + discriminator.length() + column.length()];
+	sprintf(buffer, getFromStatement_.c_str(), column.c_str(), username.c_str(), discriminator.c_str());
+	// Are there any rows returned? If so the user was existent.
+	if (sqlite3_prepare_v2(db_, buffer, -1, &stmt, NULL) == SQLITE_OK) {
+		if (int res = sqlite3_step(stmt) == SQLITE_ROW) {
+			return sqlite3_column_int(stmt, 0);
+		} else {
+			return 0;
+		}
+		sqlite3_finalize(stmt);
 	} else {
-		*exists = false;
+		return 0;
 	}
-	return 0;
+}
+
+/*
+Function:		Database::setIntFromUser
+Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>, int <value to set>
+Return Value:	None
+Description:	Sets a integer column value to the database relative to a user.
+*/
+void Database::setIntForUser(std::string username, std::string discriminator, std::string column, int value) {
+	// Generate our sql query using the username and discriminator of the user.
+	char * buffer = new char[setFromStatement_.length() + username.length() + discriminator.length() + column.length() + 10];
+	sprintf(buffer, setFromStatement_.c_str(), column.c_str(), std::to_string(value).c_str(), username.c_str(), discriminator.c_str());
+	// Execute the statement without result handling.
+	sqlite3_exec(db_, buffer, NULL, NULL, NULL);
 }

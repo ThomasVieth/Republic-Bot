@@ -3,6 +3,7 @@
 #include "Database.h"
 
 #include <sleepy_discord\websocketpp_websocket.h>
+#include <vector>
 
 using namespace SleepyDiscord;
 
@@ -15,6 +16,8 @@ Description:	Subclass of the Discord API being used.
 class Client : public DiscordClient {
 	private:
 		Database * db_;
+		std::string showBalanceString_ = "Your ELO balance is: %d ELO";
+		std::string giveEloString_ = "You have given %d ELO to ";
 
 	public:
 		// Used to initialise the DiscordClient before overloading methods.
@@ -35,4 +38,12 @@ class Client : public DiscordClient {
 		Description:	Event called upon a message being created.
 		*/
 		void onMessage(Message message);
+
+		/*
+		Function:		Client::addUserIfNotExists
+		Parameters:		SleepyDiscord::User <the user to check>
+		Return Value:	None
+		Description:	Try to add the user to the database if needed.
+		*/
+		void addUserIfNotExists(User user);
 };
