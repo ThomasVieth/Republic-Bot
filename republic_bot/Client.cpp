@@ -37,6 +37,10 @@ void Client::onMessage(SleepyDiscord::Message message) {
 			message.reply(this, giveEloArgFailedString_);
 		}
 	}
+	// !faction
+	else if (tokens[0].compare("!faction") == 0) {
+		displayFaction(message);
+	}
 }
 
 /*
@@ -49,6 +53,23 @@ void Client::addUserIfNotExists(User user) {
 	if (!db_->exists(user.username, user.discriminator)) {
 		db_->insertUser(user.username, user.discriminator);
 	}
+}
+
+/*
+Function:		Client::displayFaction
+Parameters:		SleepyDiscord::Message <the message to check>
+Return Value:	None
+Description:	Show the requesters faction.
+*/
+void Client::displayFaction(Message message) {
+	// Check if the user is existent. If not add their data.
+	addUserIfNotExists(message.author);
+	// Check for the users balance.
+	char * value = db_->getStrFromUser(message.author.username, message.author.discriminator, "FACTION");
+	// Setting up the message to be sent back.
+	char * buffer = new char[showFactionString_.length() + 10]();
+	sprintf(buffer, showFactionString_.c_str(), value);
+	message.reply(this, strcmp(value, "") != 0 ? buffer : showNoFactionString_);
 }
 
 /*

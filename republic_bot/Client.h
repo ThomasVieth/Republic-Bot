@@ -17,8 +17,25 @@ class Client : public DiscordClient {
 	private:
 		Database * db_;
 		std::string showBalanceString_ = "Your ELO balance is: %d ELO";
+		std::string showFactionString_ = "Your current Faction is: %s";
+		std::string showNoFactionString_ = "You have no current Faction.";
 		std::string giveEloString_ = "You have given %d ELO to "; // The targets are added to the end of the string.
 		std::string giveEloArgFailedString_ = "Please supply atleast 1 person and an amount.";
+		std::vector<std::string> allFactions = {
+			"Bandle_City",
+			"Bilgewater",
+			"Darkin",
+			"Demacia",
+			"Freljord",
+			"Ionia",
+			"Noxus",
+			"Piltover",
+			"Shadow_Isles",
+			"Shurima",
+			"Targon",
+			"Void",
+			"Zaun"
+		};
 
 	public:
 		// Used to initialise the DiscordClient before overloading methods.
@@ -47,6 +64,14 @@ class Client : public DiscordClient {
 		Description:	Try to add the user to the database if needed.
 		*/
 		void addUserIfNotExists(User user);
+
+		/*
+		Function:		Client::displayFaction
+		Parameters:		SleepyDiscord::Message <the message to check>
+		Return Value:	None
+		Description:	Show the requesters faction.
+		*/
+		void displayFaction(Message message);
 
 		/*
 		Function:		Client::displayBalance

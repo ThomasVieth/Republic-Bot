@@ -97,6 +97,31 @@ int Database::getIntFromUser(std::string username, std::string discriminator, st
 }
 
 /*
+Function:		Database::getStrFromUser
+Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>
+Return Value:	char *
+Description:	Retrieves a column value from the database relative to a user.
+*/
+char * Database::getStrFromUser(std::string username, std::string discriminator, std::string column)
+{
+	char * buffer = new char[getFromStatement_.length() + username.length() + discriminator.length() + column.length()];
+	sprintf(buffer, getFromStatement_.c_str(), column.c_str(), username.c_str(), discriminator.c_str());
+	// Are there any rows returned? If so the user was existent.
+	if (sqlite3_prepare_v2(db_, buffer, -1, &stmt, NULL) == SQLITE_OK) {
+		if (int res = sqlite3_step(stmt) == SQLITE_ROW) {
+			return (char *)sqlite3_column_text(stmt, 0);
+		}
+		else {
+			return nullptr;
+		}
+		sqlite3_finalize(stmt);
+	}
+	else {
+		return nullptr;
+	}
+}
+
+/*
 Function:		Database::setIntFromUser
 Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>, int <value to set>
 Return Value:	None

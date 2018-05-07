@@ -19,9 +19,10 @@ class Database
 											 "NAME			TEXT	NOT NULL," \
 											 "DISCRIMINATOR	INT		NOT NULL," \
 											 "BALANCE		INT," \
+											 "FACTION		TEXT," \
 											 "PRIMARY KEY (NAME, DISCRIMINATOR)" \
 											 ");";
-		std::string insertStatement_ = "INSERT INTO Users VALUES ('%s', %s, 0)";
+		std::string insertStatement_ = "INSERT INTO Users VALUES ('%s', %s, 0, '')";
 		std::string existsStatement_ = "SELECT * FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
 		std::string getFromStatement_ = "SELECT %s FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
 		std::string setFromStatement_ = "UPDATE Users SET %s=%s WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
@@ -82,6 +83,14 @@ class Database
 		Description:	Retrieves a integer column value from the database relative to a user.
 		*/
 		int getIntFromUser(std::string username, std::string discriminator, std::string column);
+
+		/*
+		Function:		Database::getStrFromUser
+		Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>
+		Return Value:	char *
+		Description:	Retrieves a integer column value from the database relative to a user.
+		*/
+		char * getStrFromUser(std::string username, std::string discriminator, std::string column);
 
 		/*
 		Function:		Database::setIntFromUser
