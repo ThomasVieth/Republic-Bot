@@ -25,7 +25,8 @@ class Database
 		std::string insertStatement_ = "INSERT INTO Users VALUES ('%s', %s, 0, '')";
 		std::string existsStatement_ = "SELECT * FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
 		std::string getFromStatement_ = "SELECT %s FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
-		std::string setFromStatement_ = "UPDATE Users SET %s=%s WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
+		std::string setFromStatementInt_ = "UPDATE Users SET %s=%s WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
+		std::string setFromStatementString_ = "UPDATE Users SET %s='%s' WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
 
 	public:
 		/*
@@ -99,5 +100,13 @@ class Database
 		Description:	Sets a integer column value to the database relative to a user.
 		*/
 		void setIntForUser(std::string username, std::string discriminator, std::string column, int value);
+
+		/*
+		Function:		Database::setStrFromUser
+		Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>, string <value to set>
+		Return Value:	None
+		Description:	Sets a text column value to the database relative to a user.
+		*/
+		void setStrForUser(std::string username, std::string discriminator, std::string column, std::string value);
 };
 

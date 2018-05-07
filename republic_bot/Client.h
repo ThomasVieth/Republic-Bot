@@ -2,6 +2,8 @@
 
 #include "Database.h"
 
+#include <algorithm>
+#include <ostream>
 #include <sleepy_discord\websocketpp_websocket.h>
 #include <vector>
 
@@ -18,7 +20,9 @@ class Client : public DiscordClient {
 		Database * db_;
 		std::string showBalanceString_ = "Your ELO balance is: %d ELO";
 		std::string showFactionString_ = "Your current Faction is: %s";
+		std::string showFactionChangeString_ = "You changed faction to %s.";
 		std::string showNoFactionString_ = "You have no current Faction.";
+		std::string showFalseFactionString_ = "Sorry, the faction you chose does not exist.";
 		std::string giveEloString_ = "You have given %d ELO to "; // The targets are added to the end of the string.
 		std::string giveEloArgFailedString_ = "Please supply atleast 1 person and an amount.";
 		std::vector<std::string> allFactions = {
@@ -72,6 +76,14 @@ class Client : public DiscordClient {
 		Description:	Show the requesters faction.
 		*/
 		void displayFaction(Message message);
+
+		/*
+		Function:		Client::changeFaction
+		Parameters:		SleepyDiscord::Message <the message to check>
+		Return Value:	None
+		Description:	Changes the requesters faction.
+		*/
+		void changeFaction(Message message, std::string faction);
 
 		/*
 		Function:		Client::displayBalance

@@ -129,8 +129,22 @@ Description:	Sets a integer column value to the database relative to a user.
 */
 void Database::setIntForUser(std::string username, std::string discriminator, std::string column, int value) {
 	// Generate our sql query using the username and discriminator of the user.
-	char * buffer = new char[setFromStatement_.length() + username.length() + discriminator.length() + column.length() + 10];
-	sprintf(buffer, setFromStatement_.c_str(), column.c_str(), std::to_string(value).c_str(), username.c_str(), discriminator.c_str());
+	char * buffer = new char[setFromStatementInt_.length() + username.length() + discriminator.length() + column.length() + 10]();
+	sprintf(buffer, setFromStatementInt_.c_str(), column.c_str(), std::to_string(value).c_str(), username.c_str(), discriminator.c_str());
+	// Execute the statement without result handling.
+	sqlite3_exec(db_, buffer, NULL, NULL, NULL);
+}
+
+/*
+Function:		Database::setStrFromUser
+Parameters:		string <a username>, string <a discriminator>, string <a detail to fetch>, string <value to set>
+Return Value:	None
+Description:	Sets a text column value to the database relative to a user.
+*/
+void Database::setStrForUser(std::string username, std::string discriminator, std::string column, std::string value) {
+	// Generate our sql query using the username and discriminator of the user.
+	char * buffer = new char[setFromStatementString_.length() + username.length() + discriminator.length() + column.length() + value.length()]();
+	sprintf(buffer, setFromStatementString_.c_str(), column.c_str(), value.c_str(), username.c_str(), discriminator.c_str());
 	// Execute the statement without result handling.
 	sqlite3_exec(db_, buffer, NULL, NULL, NULL);
 }

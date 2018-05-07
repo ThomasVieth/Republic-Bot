@@ -19,6 +19,10 @@ Return Value:	None
 Description:	Event called upon a message being created.
 */
 void Client::onMessage(SleepyDiscord::Message message) {
+	// Just improves efficiency.
+	if (!message.startsWith("!")) {
+		return;
+	}
 	// Retrieving the tokens to use by splitting the message.
 	std::istringstream buf(message.content);
 	std::istream_iterator<std::string> beg(buf), end;
@@ -39,7 +43,22 @@ void Client::onMessage(SleepyDiscord::Message message) {
 	}
 	// !faction
 	else if (tokens[0].compare("!faction") == 0) {
-		displayFaction(message);
+		if (tokens.size() == 1) {
+			displayFaction(message);
+		} else {
+			std::string faction = "";
+			for (int i = 1; i < tokens.size(); i++) {
+				faction += tokens[i];
+				if (i < tokens.size() - 1) {
+					faction += "_";
+				}
+			}
+			if (std::find(allFactions.begin(), allFactions.end(), faction) != allFactions.end()) {
+				changeFaction(message, faction);
+			} else {
+				message.reply(this, showFalseFactionString_);
+			}
+		}
 	}
 }
 
@@ -70,6 +89,23 @@ void Client::displayFaction(Message message) {
 	char * buffer = new char[showFactionString_.length() + 10]();
 	sprintf(buffer, showFactionString_.c_str(), value);
 	message.reply(this, strcmp(value, "") != 0 ? buffer : showNoFactionString_);
+}
+
+/*
+Function:		Client::changeFaction
+Parameters:		SleepyDiscord::Message <the message to check>
+Return Value:	None
+Description:	Changes the requesters faction.
+*/
+void Client::changeFaction(Message message, std::string faction) {
+	// Check if the user is existent. If not add their data.
+	addUserIfNotExists(message.author);
+	// Setting up the users new faction.
+	db_->setStrForUser(message.author.username, message.author.discriminator, "FACTION", faction);
+	// Setting up the message to be sent back.
+	char * buffer = new char[showFactionChangeString_.length() + faction.length()]();
+	sprintf(buffer, showFactionChangeString_.c_str(), faction.c_str());
+	message.reply(this, buffer);
 }
 
 /*
