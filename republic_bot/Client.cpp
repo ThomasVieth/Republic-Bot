@@ -38,7 +38,20 @@ void Client::onMessage(SleepyDiscord::Message message) {
 			int toAdd = atoi(tokens[tokens.size() - 1].c_str());
 			giveElo(message, toAdd);
 		} else {
+		}
+		else {
 			message.reply(this, giveEloArgFailedString_);
+		}
+	}
+	// !takeelo
+	else if (tokens[0].compare("!takeelo") == 0) {
+		// Retrieve the amount to give from the tokens.
+		if (tokens.size() > 2) {
+			int toSub = atoi(tokens[tokens.size() - 1].c_str());
+			takeElo(message, toSub);
+		}
+		else {
+			message.reply(this, takeEloArgFailedString_);
 		}
 	}
 	// !faction
@@ -146,6 +159,43 @@ void Client::giveElo(Message message, int toAdd) {
 		// Setting up the message to be sent back and setting data.
 		int value = db_->getIntFromUser(target.username, target.discriminator, "BALANCE");
 		db_->setIntForUser(target.username, target.discriminator, "BALANCE", value + toAdd);
+		buffer += target.username.c_str();
+		// Just adding extra nice formatting.
+		if (i < size - 2) {
+			buffer += ", ";
+		}
+		// Only use add if 1 or more users is specified.
+		else if (i == size - 2) {
+			buffer += " and ";
+		}
+		else {
+			buffer += ".";
+		}
+	}
+	message.reply(this, buffer);
+}
+
+/*
+Function:		Client::takeElo
+Parameters:		SleepyDiscord::Message <the message to check>
+Return Value:	None
+Description:	Takes the users mentioned the amount of ELO.
+*/
+void Client::takeElo(Message message, int toSub) {
+	// Create the char array buffer to format into, ensure its size.
+	int size = message.mentions.size();
+	char * cBuffer = new char[showBalanceString_.length() + (size * 64)]();
+	// Formatting the addition into the message.
+	sprintf(cBuffer, takeEloString_.c_str(), toSub);
+	std::string buffer = cBuffer;
+	// Adding for all targets balance and adding to message.
+	for (int i = 0; i < size; i++) {
+		User target = message.mentions[i];
+		// Check if the user is existent. If not add their data.
+		addUserIfNotExists(target);
+		// Setting up the message to be sent back and setting data.
+		int value = db_->getIntFromUser(target.username, target.discriminator, "BALANCE");
+		db_->setIntForUser(target.username, target.discriminator, "BALANCE", value - toSub);
 		buffer += target.username.c_str();
 		// Just adding extra nice formatting.
 		if (i < size - 2) {

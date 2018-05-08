@@ -25,6 +25,8 @@ class Client : public DiscordClient {
 		std::string showFalseFactionString_ = "Sorry, the faction you chose does not exist.";
 		std::string giveEloString_ = "You have given %d ELO to "; // The targets are added to the end of the string.
 		std::string giveEloArgFailedString_ = "Please supply atleast 1 person and an amount.";
+		std::string takeEloString_ = "You have taken %d ELO from "; // The targets are added to the end of the string.
+		std::string takeEloArgFailedString_ = "Please supply atleast 1 person and an amount.";
 		std::vector<std::string> allFactions = {
 			"Bandle_City",
 			"Bilgewater",
@@ -100,4 +102,12 @@ class Client : public DiscordClient {
 		Description:	Give the users mentioned the amount of ELO.
 		*/
 		void giveElo(Message message, int toAdd);
+
+		/*
+		Function:		Client::takeElo
+		Parameters:		SleepyDiscord::Message <the message to check>
+		Return Value:	None
+		Description:	Takes the users mentioned the amount of ELO.
+		*/
+		void takeElo(Message message, int toSub);
 };
