@@ -28,7 +28,7 @@ void Client::onMessage(SleepyDiscord::Message message) {
 	std::istream_iterator<std::string> beg(buf), end;
 	std::vector<std::string> tokens(beg, end);
 	// !balance
-	if (tokens[0].compare("!balance") == 0) {
+	if (tokens[0].compare("!balance") == 0 && commandBalanceEnabled) {
 		displayBalance(message);
 	}
 	// !giveelo
@@ -37,7 +37,6 @@ void Client::onMessage(SleepyDiscord::Message message) {
 		if (tokens.size() > 2) {
 			int toAdd = atoi(tokens[tokens.size() - 1].c_str());
 			giveElo(message, toAdd);
-		} else {
 		}
 		else {
 			message.reply(this, giveEloArgFailedString_);
@@ -55,10 +54,11 @@ void Client::onMessage(SleepyDiscord::Message message) {
 		}
 	}
 	// !faction
-	else if (tokens[0].compare("!faction") == 0) {
+	else if (tokens[0].compare("!faction") == 0 && commandFactionEnabled) {
 		if (tokens.size() == 1) {
 			displayFaction(message);
-		} else {
+		}
+		else {
 			std::string faction = "";
 			for (int i = 1; i < tokens.size(); i++) {
 				faction += tokens[i];
@@ -68,9 +68,32 @@ void Client::onMessage(SleepyDiscord::Message message) {
 			}
 			if (std::find(allFactions.begin(), allFactions.end(), faction) != allFactions.end()) {
 				changeFaction(message, faction);
-			} else {
+			}
+			else {
 				message.reply(this, showFalseFactionString_);
 			}
+		}
+	}
+	// !toggle
+	else if (tokens[0].compare("!toggle") == 0) {
+		printf("%d", tokens.size());
+		if (tokens.size() != 2) {
+			message.reply(this, toggleFailed_);
+		}
+		else if (tokens[1].compare("factions") == 0) {
+			commandFactionEnabled = !commandFactionEnabled;
+			char * buffer = new char[toggleSuccess_.length() + 10]();
+			sprintf(buffer, toggleSuccess_.c_str(), "factions", commandFactionEnabled ? "ON" : "OFF");
+			message.reply(this, buffer);
+		}
+		else if (tokens[1].compare("elo") == 0) {
+			commandBalanceEnabled = !commandBalanceEnabled;
+			char * buffer = new char[toggleSuccess_.length() + 10]();
+			sprintf(buffer, toggleSuccess_.c_str(), "ELO", commandBalanceEnabled ? "ON" : "OFF");
+			message.reply(this, buffer);
+		}
+		else {
+			message.reply(this, toggleFailed_);
 		}
 	}
 }

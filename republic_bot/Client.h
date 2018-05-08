@@ -18,6 +18,8 @@ Description:	Subclass of the Discord API being used.
 class Client : public DiscordClient {
 	private:
 		Database * db_;
+		std::string toggleFailed_ = "Please use as !toggle <faction/elo>.";
+		std::string toggleSuccess_ = "Toggled %s to %s.";
 		std::string showBalanceString_ = "Your ELO balance is: %d ELO";
 		std::string showFactionString_ = "Your current Faction is: %s";
 		std::string showFactionChangeString_ = "You changed faction to %s.";
@@ -42,6 +44,9 @@ class Client : public DiscordClient {
 			"Void",
 			"Zaun"
 		};
+
+		bool commandBalanceEnabled = true;
+		bool commandFactionEnabled = true;
 
 	public:
 		// Used to initialise the DiscordClient before overloading methods.
