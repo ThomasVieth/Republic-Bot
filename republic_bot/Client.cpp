@@ -10,6 +10,11 @@ Description:	Constructor overloading default to add database features.
 */
 Client::Client(std::string token, int threads, std::string dbLoc) : DiscordClient(token, threads) {
 	db_ = new Database(dbLoc);
+	commandMap["!balance"] = &Client::displayBalance;
+	commandMap["!giveelo"] = &Client::giveElo;
+	commandMap["!takeelo"] = &Client::takeElo;
+	commandMap["!faction"] = &Client::handleFaction;
+	commandMap["!toggle"]  = &Client::handleToggle;
 }
 
 /*
@@ -27,74 +32,9 @@ void Client::onMessage(SleepyDiscord::Message message) {
 	std::istringstream buf(message.content);
 	std::istream_iterator<std::string> beg(buf), end;
 	std::vector<std::string> tokens(beg, end);
-	// !balance
-	if (tokens[0].compare("!balance") == 0 && commandBalanceEnabled) {
-		displayBalance(message);
-	}
-	// !giveelo
-	else if (tokens[0].compare("!giveelo") == 0) {
-		// Retrieve the amount to give from the tokens.
-		if (tokens.size() > 2) {
-			int toAdd = atoi(tokens[tokens.size() - 1].c_str());
-			giveElo(message, toAdd);
-		}
-		else {
-			message.reply(this, giveEloArgFailedString_);
-		}
-	}
-	// !takeelo
-	else if (tokens[0].compare("!takeelo") == 0) {
-		// Retrieve the amount to give from the tokens.
-		if (tokens.size() > 2) {
-			int toSub = atoi(tokens[tokens.size() - 1].c_str());
-			takeElo(message, toSub);
-		}
-		else {
-			message.reply(this, takeEloArgFailedString_);
-		}
-	}
-	// !faction
-	else if (tokens[0].compare("!faction") == 0 && commandFactionEnabled) {
-		if (tokens.size() == 1) {
-			displayFaction(message);
-		}
-		else {
-			std::string faction = "";
-			for (int i = 1; i < tokens.size(); i++) {
-				faction += tokens[i];
-				if (i < tokens.size() - 1) {
-					faction += "_";
-				}
-			}
-			if (std::find(allFactions.begin(), allFactions.end(), faction) != allFactions.end()) {
-				changeFaction(message, faction);
-			}
-			else {
-				message.reply(this, showFalseFactionString_);
-			}
-		}
-	}
-	// !toggle
-	else if (tokens[0].compare("!toggle") == 0) {
-		printf("%d", tokens.size());
-		if (tokens.size() != 2) {
-			message.reply(this, toggleFailed_);
-		}
-		else if (tokens[1].compare("factions") == 0) {
-			commandFactionEnabled = !commandFactionEnabled;
-			char * buffer = new char[toggleSuccess_.length() + 10]();
-			sprintf(buffer, toggleSuccess_.c_str(), "factions", commandFactionEnabled ? "ON" : "OFF");
-			message.reply(this, buffer);
-		}
-		else if (tokens[1].compare("elo") == 0) {
-			commandBalanceEnabled = !commandBalanceEnabled;
-			char * buffer = new char[toggleSuccess_.length() + 10]();
-			sprintf(buffer, toggleSuccess_.c_str(), "ELO", commandBalanceEnabled ? "ON" : "OFF");
-			message.reply(this, buffer);
-		}
-		else {
-			message.reply(this, toggleFailed_);
-		}
+	// Handles all commands.
+	if (commandMap.find(tokens[0]) != commandMap.end()) {
+		commandMap.at(tokens[0])(this, message, tokens);
 	}
 }
 
@@ -107,6 +47,63 @@ Description:	Try to add the user to the database if needed.
 void Client::addUserIfNotExists(User user) {
 	if (!db_->exists(user.username, user.discriminator)) {
 		db_->insertUser(user.username, user.discriminator);
+	}
+}
+
+/*
+Function:		Client::handleToggle
+Parameters:		SleepyDiscord::Message <the message to check>
+Return Value:	None
+Description:	Handle the toggle command.
+*/
+void Client::handleToggle(Message message, std::vector<std::string> tokens) {
+	if (tokens.size() != 2) {
+		message.reply(this, toggleFailed_);
+	}
+	else if (tokens[1].compare("factions") == 0) {
+		commandFactionEnabled = !commandFactionEnabled;
+		char * buffer = new char[toggleSuccess_.length() + 10]();
+		sprintf(buffer, toggleSuccess_.c_str(), "factions", commandFactionEnabled ? "ON" : "OFF");
+		message.reply(this, buffer);
+	}
+	else if (tokens[1].compare("elo") == 0) {
+		commandBalanceEnabled = !commandBalanceEnabled;
+		char * buffer = new char[toggleSuccess_.length() + 10]();
+		sprintf(buffer, toggleSuccess_.c_str(), "ELO", commandBalanceEnabled ? "ON" : "OFF");
+		message.reply(this, buffer);
+	}
+	else {
+		message.reply(this, toggleFailed_);
+	}
+}
+
+/*
+Function:		Client::handleFaction
+Parameters:		SleepyDiscord::Message <the message to check>
+Return Value:	None
+Description:	Handle the faction command.
+*/
+void Client::handleFaction(Message message, std::vector<std::string> tokens) {
+	if (!commandFactionEnabled)
+		return;
+
+	if (tokens.size() == 1) {
+		displayFaction(message);
+	}
+	else {
+		std::string faction = "";
+		for (int i = 1; i < tokens.size(); i++) {
+			faction += tokens[i];
+			if (i < tokens.size() - 1) {
+				faction += "_";
+			}
+		}
+		if (std::find(allFactions.begin(), allFactions.end(), faction) != allFactions.end()) {
+			changeFaction(message, faction);
+		}
+		else {
+			message.reply(this, showFalseFactionString_);
+		}
 	}
 }
 
@@ -150,7 +147,10 @@ Parameters:		SleepyDiscord::Message <the message to check>
 Return Value:	None
 Description:	Show the requesters ELO balance.
 */
-void Client::displayBalance(Message message) {
+void Client::displayBalance(Message message, std::vector<std::string> tokens) {
+	if (!commandBalanceEnabled)
+		return;
+
 	// Check if the user is existent. If not add their data.
 	addUserIfNotExists(message.author);
 	// Check for the users balance.
@@ -167,35 +167,41 @@ Parameters:		SleepyDiscord::Message <the message to check>
 Return Value:	None
 Description:	Give the users mentioned the amount of ELO.
 */
-void Client::giveElo(Message message, int toAdd) {
-	// Create the char array buffer to format into, ensure its size.
-	int size = message.mentions.size();
-	char * cBuffer = new char[showBalanceString_.length() + (size * 64)]();
-	// Formatting the addition into the message.
-	sprintf(cBuffer, giveEloString_.c_str(), toAdd);
-	std::string buffer = cBuffer;
-	// Adding for all targets balance and adding to message.
-	for (int i = 0; i < size; i++) {
-		User target = message.mentions[i];
-		// Check if the user is existent. If not add their data.
-		addUserIfNotExists(target);
-		// Setting up the message to be sent back and setting data.
-		int value = db_->getIntFromUser(target.username, target.discriminator, "BALANCE");
-		db_->setIntForUser(target.username, target.discriminator, "BALANCE", value + toAdd);
-		buffer += target.username.c_str();
-		// Just adding extra nice formatting.
-		if (i < size - 2) {
-			buffer += ", ";
+void Client::giveElo(Message message, std::vector<std::string> tokens) {
+	if (tokens.size() > 2) {
+		int toAdd = atoi(tokens[tokens.size() - 1].c_str());
+		// Create the char array buffer to format into, ensure its size.
+		int size = message.mentions.size();
+		char * cBuffer = new char[showBalanceString_.length() + (size * 64)]();
+		// Formatting the addition into the message.
+		sprintf(cBuffer, giveEloString_.c_str(), toAdd);
+		std::string buffer = cBuffer;
+		// Adding for all targets balance and adding to message.
+		for (int i = 0; i < size; i++) {
+			User target = message.mentions[i];
+			// Check if the user is existent. If not add their data.
+			addUserIfNotExists(target);
+			// Setting up the message to be sent back and setting data.
+			int value = db_->getIntFromUser(target.username, target.discriminator, "BALANCE");
+			db_->setIntForUser(target.username, target.discriminator, "BALANCE", value + toAdd);
+			buffer += target.username.c_str();
+			// Just adding extra nice formatting.
+			if (i < size - 2) {
+				buffer += ", ";
+			}
+			// Only use add if 1 or more users is specified.
+			else if (i == size - 2) {
+				buffer += " and ";
+			}
+			else {
+				buffer += ".";
+			}
 		}
-		// Only use add if 1 or more users is specified.
-		else if (i == size - 2) {
-			buffer += " and ";
-		}
-		else {
-			buffer += ".";
-		}
+		message.reply(this, buffer);
 	}
-	message.reply(this, buffer);
+	else {
+		message.reply(this, giveEloArgFailedString_);
+	}
 }
 
 /*
@@ -204,33 +210,39 @@ Parameters:		SleepyDiscord::Message <the message to check>
 Return Value:	None
 Description:	Takes the users mentioned the amount of ELO.
 */
-void Client::takeElo(Message message, int toSub) {
-	// Create the char array buffer to format into, ensure its size.
-	int size = message.mentions.size();
-	char * cBuffer = new char[showBalanceString_.length() + (size * 64)]();
-	// Formatting the addition into the message.
-	sprintf(cBuffer, takeEloString_.c_str(), toSub);
-	std::string buffer = cBuffer;
-	// Adding for all targets balance and adding to message.
-	for (int i = 0; i < size; i++) {
-		User target = message.mentions[i];
-		// Check if the user is existent. If not add their data.
-		addUserIfNotExists(target);
-		// Setting up the message to be sent back and setting data.
-		int value = db_->getIntFromUser(target.username, target.discriminator, "BALANCE");
-		db_->setIntForUser(target.username, target.discriminator, "BALANCE", value - toSub);
-		buffer += target.username.c_str();
-		// Just adding extra nice formatting.
-		if (i < size - 2) {
-			buffer += ", ";
+void Client::takeElo(Message message, std::vector<std::string> tokens) {
+	if (tokens.size() > 2) {
+		int toSub = atoi(tokens[tokens.size() - 1].c_str());
+		// Create the char array buffer to format into, ensure its size.
+		int size = message.mentions.size();
+		char * cBuffer = new char[showBalanceString_.length() + (size * 64)]();
+		// Formatting the addition into the message.
+		sprintf(cBuffer, takeEloString_.c_str(), toSub);
+		std::string buffer = cBuffer;
+		// Adding for all targets balance and adding to message.
+		for (int i = 0; i < size; i++) {
+			User target = message.mentions[i];
+			// Check if the user is existent. If not add their data.
+			addUserIfNotExists(target);
+			// Setting up the message to be sent back and setting data.
+			int value = db_->getIntFromUser(target.username, target.discriminator, "BALANCE");
+			db_->setIntForUser(target.username, target.discriminator, "BALANCE", value - toSub);
+			buffer += target.username.c_str();
+			// Just adding extra nice formatting.
+			if (i < size - 2) {
+				buffer += ", ";
+			}
+			// Only use add if 1 or more users is specified.
+			else if (i == size - 2) {
+				buffer += " and ";
+			}
+			else {
+				buffer += ".";
+			}
 		}
-		// Only use add if 1 or more users is specified.
-		else if (i == size - 2) {
-			buffer += " and ";
-		}
-		else {
-			buffer += ".";
-		}
+		message.reply(this, buffer);
 	}
-	message.reply(this, buffer);
+	else {
+		message.reply(this, takeEloArgFailedString_);
+	}
 }
