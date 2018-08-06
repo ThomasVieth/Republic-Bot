@@ -15,6 +15,9 @@ Client::Client(std::string token, int threads, std::string dbLoc) : DiscordClien
 	commandMap["!takeelo"] = &Client::takeElo;
 	commandMap["!faction"] = &Client::handleFaction;
 	commandMap["!toggle"]  = &Client::handleToggle;
+	commandMap["!mute"] = &Client::handleMute;
+	commandMap["!unmute"] = &Client::handleUnmute;
+	commandMap["!ismuted"] = &Client::handleIsMuted;
 }
 
 /*
@@ -26,6 +29,10 @@ Description:	Event called upon a message being created.
 void Client::onMessage(SleepyDiscord::Message message) {
 	// Just improves efficiency.
 	if (!message.startsWith("!")) {
+		// Checking for mutes.
+		if (isMuted(message.author)) {
+			deleteMessage(message.channelID, message.ID);
+		}
 		return;
 	}
 	// Retrieving the tokens to use by splitting the message.
@@ -35,6 +42,7 @@ void Client::onMessage(SleepyDiscord::Message message) {
 	// Handles all commands.
 	if (commandMap.find(tokens[0]) != commandMap.end()) {
 		commandMap.at(tokens[0])(this, message, tokens);
+		return;
 	}
 }
 
@@ -104,6 +112,90 @@ void Client::handleFaction(Message message, std::vector<std::string> tokens) {
 		else {
 			message.reply(this, showFalseFactionString_);
 		}
+	}
+}
+
+void Client::handleMute(Message message, std::vector<std::string> tokens) {
+	if (tokens.size() > 2) {
+		if (!isdigit(tokens[tokens.size() - 1][0])) {
+			message.reply(this, muteUserFailedString_);
+			return;
+		}
+		int minutes = atoi(tokens[tokens.size() - 1].c_str());
+		// Create the char array buffer to format into, ensure its size.
+		int size = message.mentions.size();
+		// Setting up the message for formatting.
+		std::string buffer = muteUserString_;
+		// Adding for all targets balance and adding to message.
+		for (int i = 0; i < size; i++) {
+			User target = message.mentions[i];
+			// Check if the user is existent. If not add their data.
+			addUserIfNotExists(target);
+			// Setting up the message to be sent back and setting data.
+			muteUser(target, minutes);
+			buffer += target.username.c_str();
+			// Just adding extra nice formatting.
+			if (i < size - 2) {
+				buffer += ", ";
+			}
+			// Only use add if 1 or more users is specified.
+			else if (i == size - 2) {
+				buffer += " and ";
+			}
+			else {
+				buffer += ".";
+			}
+		}
+		message.reply(this, buffer);
+	}
+	else {
+		message.reply(this, muteUserFailedString_);
+	}
+}
+
+void Client::handleUnmute(Message message, std::vector<std::string> tokens) {
+	if (tokens.size() > 1) {
+		// Create the char array buffer to format into, ensure its size.
+		int size = message.mentions.size();
+		// Setting up the message for formatting.
+		std::string buffer = unmuteUserString_;
+		// Adding for all targets balance and adding to message.
+		for (int i = 0; i < size; i++) {
+			User target = message.mentions[i];
+			// Check if the user is existent. If not add their data.
+			addUserIfNotExists(target);
+			// Setting up the message to be sent back and setting data.
+			unmuteUser(target);
+			buffer += target.username.c_str();
+			// Just adding extra nice formatting.
+			if (i < size - 2) {
+				buffer += ", ";
+			}
+			// Only use add if 1 or more users is specified.
+			else if (i == size - 2) {
+				buffer += " and ";
+			}
+			else {
+				buffer += ".";
+			}
+		}
+		message.reply(this, buffer);
+	}
+	else {
+		message.reply(this, unmuteUserFailedString_);
+	}
+}
+
+void Client::handleIsMuted(Message message, std::vector<std::string> tokens) {
+	// Create the char array buffer to format into, ensure its size.
+	int size = message.mentions.size();
+	// Adding for all targets balance and adding to message.
+	for (int i = 0; i < size; i++) {
+		char * buffer = new char[isUserMutedString_.length() + 67];
+		User target = message.mentions[i];
+		bool targetMuted = isMuted(target);
+		sprintf(buffer, isUserMutedString_.c_str(), target.username.c_str(), targetMuted ? "Yes" : "No");
+		message.reply(this, buffer);
 	}
 }
 
@@ -245,4 +337,35 @@ void Client::takeElo(Message message, std::vector<std::string> tokens) {
 	else {
 		message.reply(this, takeEloArgFailedString_);
 	}
+}
+
+/*
+Function:		Client::muteUser
+Parameters:		SleepyDiscord::Message <the message to check>
+Return Value:	None
+Description:	Mutes the indicated user for a period of time.
+*/
+void Client::muteUser(User user, int minutes) {
+	int epoch = std::time(nullptr);
+	int mutedEpoch = epoch + (minutes * 60);
+	db_->setIntForUser(user.username, user.discriminator, "UNMUTE_TIME", mutedEpoch);
+}
+
+/*
+Function:		Client::unmuteUser
+Parameters:		SleepyDiscord::Message <the message to check>
+Return Value:	None
+Description:	Unmutes the indicated user.
+*/
+void Client::unmuteUser(User user) {
+	db_->setIntForUser(user.username, user.discriminator, "UNMUTE_TIME", 0);
+}
+
+bool Client::isMuted(User user) {
+	int value = db_->getIntFromUser(user.username, user.discriminator, "UNMUTE_TIME");
+	int epoch = std::time(nullptr);
+	if (value > epoch) {
+		return true;
+	}
+	return false;
 }

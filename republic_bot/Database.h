@@ -20,9 +20,10 @@ class Database
 											 "DISCRIMINATOR	INT		NOT NULL," \
 											 "BALANCE		INT," \
 											 "FACTION		TEXT," \
+											 "UNMUTE_TIME	INT," \
 											 "PRIMARY KEY (NAME, DISCRIMINATOR)" \
 											 ");";
-		std::string insertStatement_ = "INSERT INTO Users VALUES ('%s', %s, 0, '')";
+		std::string insertStatement_ = "INSERT INTO Users VALUES ('%s', %s, 0, '', 0)";
 		std::string existsStatement_ = "SELECT * FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
 		std::string getFromStatement_ = "SELECT %s FROM Users WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";
 		std::string setFromStatementInt_ = "UPDATE Users SET %s=%s WHERE NAME = '%s' AND DISCRIMINATOR = '%s'";

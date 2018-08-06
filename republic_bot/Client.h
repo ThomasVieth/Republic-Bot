@@ -1,8 +1,10 @@
 #pragma once
 
+#include "include\json.hpp"
 #include "Database.h"
 
 #include <algorithm>
+#include <ctime>
 #include <functional>
 #include <ostream>
 #include <sleepy_discord\websocketpp_websocket.h>
@@ -31,6 +33,11 @@ private:
 	std::string giveEloArgFailedString_ = "Please supply atleast 1 person and an amount.";
 	std::string takeEloString_ = "You have taken %d ELO from "; // The targets are added to the end of the string.
 	std::string takeEloArgFailedString_ = "Please supply atleast 1 person and an amount.";
+	std::string muteUserString_ = "You have muted ";
+	std::string muteUserFailedString_ = "You must supply a user/users to mute along with a time.";
+	std::string unmuteUserString_ = "You have unmuted ";
+	std::string unmuteUserFailedString_ = "You must supply a user/users to unmute.";
+	std::string isUserMutedString_ = "Is user (%s) currently muted? %s.";
 	std::vector<std::string> allFactions = {
 		"Bandle_City",
 		"Bilgewater",
@@ -96,6 +103,30 @@ public:
 	void handleFaction(Message message, std::vector<std::string> tokens);
 
 	/*
+	Function:		Client::handleMute
+	Parameters:		SleepyDiscord::Message <the message to check>
+	Return Value:	None
+	Description:	Handle the mute command.
+	*/
+	void handleMute(Message message, std::vector<std::string> tokens);
+
+	/*
+	Function:		Client::handleUnmute
+	Parameters:		SleepyDiscord::Message <the message to check>
+	Return Value:	None
+	Description:	Handle the unmute command.
+	*/
+	void handleUnmute(Message message, std::vector<std::string> tokens);
+
+	/*
+	Function:		Client::handleIsMuted
+	Parameters:		SleepyDiscord::Message <the message to check>
+	Return Value:	None
+	Description:	Handle the isMute command.
+	*/
+	void handleIsMuted(Message message, std::vector<std::string> tokens);
+
+	/*
 	Function:		Client::displayFaction
 	Parameters:		SleepyDiscord::Message <the message to check>
 	Return Value:	None
@@ -134,4 +165,28 @@ public:
 	Description:	Takes the users mentioned the amount of ELO.
 	*/
 	void takeElo(Message message, std::vector<std::string> tokens);
+
+	/*
+	Function:		Client::muteUser
+	Parameters:		SleepyDiscord::Message <the message to check>
+	Return Value:	None
+	Description:	Mutes the indicated user for a period of time.
+	*/
+	void muteUser(User user, int time);
+
+	/*
+	Function:		Client::unmuteUser
+	Parameters:		SleepyDiscord::Message <the message to check>
+	Return Value:	None
+	Description:	Unmutes the indicated user.
+	*/
+	void unmuteUser(User user);
+
+	/*
+	Function:		Client::isMuted
+	Parameters:		SleepyDiscord::Message <the message to check>
+	Return Value:	bool <is the user muted?>
+	Description:	Checks if the user is muted.
+	*/
+	bool isMuted(User user);
 };
