@@ -81,16 +81,18 @@ Description:	Retrieves a column value from the database relative to a user.
 */
 int Database::getIntFromUser(std::string username, std::string discriminator, std::string column)
 {
+	int result;
 	char * buffer = new char[getFromStatement_.length() + username.length() + discriminator.length() + column.length()];
 	sprintf(buffer, getFromStatement_.c_str(), column.c_str(), username.c_str(), discriminator.c_str());
 	// Are there any rows returned? If so the user was existent.
 	if (sqlite3_prepare_v2(db_, buffer, -1, &stmt, NULL) == SQLITE_OK) {
 		if (int res = sqlite3_step(stmt) == SQLITE_ROW) {
-			return sqlite3_column_int(stmt, 0);
+			result = sqlite3_column_int(stmt, 0);
 		} else {
-			return 0;
+			result = 0;
 		}
 		sqlite3_finalize(stmt);
+		return result;
 	} else {
 		return 0;
 	}
@@ -104,17 +106,19 @@ Description:	Retrieves a column value from the database relative to a user.
 */
 char * Database::getStrFromUser(std::string username, std::string discriminator, std::string column)
 {
+	char * result = new char;
 	char * buffer = new char[getFromStatement_.length() + username.length() + discriminator.length() + column.length()];
 	sprintf(buffer, getFromStatement_.c_str(), column.c_str(), username.c_str(), discriminator.c_str());
 	// Are there any rows returned? If so the user was existent.
 	if (sqlite3_prepare_v2(db_, buffer, -1, &stmt, NULL) == SQLITE_OK) {
 		if (int res = sqlite3_step(stmt) == SQLITE_ROW) {
-			return (char *)sqlite3_column_text(stmt, 0);
+			result = (char *)sqlite3_column_text(stmt, 0);
 		}
 		else {
-			return nullptr;
+			result = nullptr;
 		}
 		sqlite3_finalize(stmt);
+		return result;
 	}
 	else {
 		return nullptr;
@@ -129,7 +133,7 @@ Description:	Sets a integer column value to the database relative to a user.
 */
 void Database::setIntForUser(std::string username, std::string discriminator, std::string column, int value) {
 	// Generate our sql query using the username and discriminator of the user.
-	char * buffer = new char[setFromStatementInt_.length() + username.length() + discriminator.length() + column.length() + 10]();
+	char * buffer = new char[setFromStatementInt_.length() + username.length() + discriminator.length() + column.length() + 32]();
 	sprintf(buffer, setFromStatementInt_.c_str(), column.c_str(), std::to_string(value).c_str(), username.c_str(), discriminator.c_str());
 	// Execute the statement without result handling.
 	sqlite3_exec(db_, buffer, NULL, NULL, NULL);
