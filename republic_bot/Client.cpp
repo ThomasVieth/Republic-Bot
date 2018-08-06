@@ -27,6 +27,9 @@ Return Value:	None
 Description:	Event called upon a message being created.
 */
 void Client::onMessage(SleepyDiscord::Message message) {
+	// Check if the user is existent. If not add their data.
+	addUserIfNotExists(message.author);
+
 	// Just improves efficiency.
 	if (!message.startsWith("!")) {
 		// Checking for mutes.
@@ -206,8 +209,6 @@ Return Value:	None
 Description:	Show the requesters faction.
 */
 void Client::displayFaction(Message message) {
-	// Check if the user is existent. If not add their data.
-	addUserIfNotExists(message.author);
 	// Check for the users balance.
 	char * value = db_->getStrFromUser(message.author.username, message.author.discriminator, "FACTION");
 	// Setting up the message to be sent back.
@@ -223,8 +224,6 @@ Return Value:	None
 Description:	Changes the requesters faction.
 */
 void Client::changeFaction(Message message, std::string faction) {
-	// Check if the user is existent. If not add their data.
-	addUserIfNotExists(message.author);
 	// Setting up the users new faction.
 	db_->setStrForUser(message.author.username, message.author.discriminator, "FACTION", faction);
 	// Setting up the message to be sent back.
@@ -243,8 +242,6 @@ void Client::displayBalance(Message message, std::vector<std::string> tokens) {
 	if (!commandBalanceEnabled)
 		return;
 
-	// Check if the user is existent. If not add their data.
-	addUserIfNotExists(message.author);
 	// Check for the users balance.
 	int value = db_->getIntFromUser(message.author.username, message.author.discriminator, "BALANCE");
 	// Setting up the message to be sent back.
