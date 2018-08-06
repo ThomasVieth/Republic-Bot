@@ -258,6 +258,10 @@ Description:	Give the users mentioned the amount of ELO.
 */
 void Client::giveElo(Message message, std::vector<std::string> tokens) {
 	if (tokens.size() > 2) {
+		if (!isdigit(tokens[tokens.size() - 1][0])) {
+			message.reply(this, giveEloArgFailedString_);
+			return;
+		}
 		int toAdd = atoi(tokens[tokens.size() - 1].c_str());
 		// Create the char array buffer to format into, ensure its size.
 		int size = message.mentions.size();
@@ -301,6 +305,10 @@ Description:	Takes the users mentioned the amount of ELO.
 */
 void Client::takeElo(Message message, std::vector<std::string> tokens) {
 	if (tokens.size() > 2) {
+		if (!isdigit(tokens[tokens.size() - 1][0])) {
+			message.reply(this, takeEloArgFailedString_);
+			return;
+		}
 		int toSub = atoi(tokens[tokens.size() - 1].c_str());
 		// Create the char array buffer to format into, ensure its size.
 		int size = message.mentions.size();
